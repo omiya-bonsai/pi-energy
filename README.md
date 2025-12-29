@@ -56,12 +56,6 @@ No external driver files are used.
 
 ---
 
-## Display Output
-
-![Display Output 1](images/IMG_8177.jpeg)
-
-![Display Output 2](images/IMG_8178.jpeg)
-
 ## Algorithm
 
 The computation uses the **Nilakantha series**:
