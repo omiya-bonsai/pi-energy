@@ -1,5 +1,7 @@
 # Pi ENERGY
 
+> このプロジェクトは、生成AI の助けを借りて開発されました。
+
 [English Version](README.md)
 
 **Pi ENERGY** は、Raspberry Pi Pico 2 を用いて、  

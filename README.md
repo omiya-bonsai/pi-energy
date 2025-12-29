@@ -1,5 +1,7 @@
 # Pi ENERGY
 
+> This project was developed with the assistance of generative AI.
+
 [日本語版](README-ja.md)
 
 **Pi ENERGY** is a small experimental project for **Raspberry Pi Pico 2** that visualizes  
