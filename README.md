@@ -194,7 +194,8 @@ each additional digit costs dramatically more energy than the previous one.
 ```
 /
 ├── main.py
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 That is the entire project.
@@ -207,4 +208,10 @@ If a Raspberry Pi Pico 2 needs minutes to gain a single digit,
 then:
 
 > **Supercomputers computing trillions of digits of π are truly amazing.**
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
