@@ -1,190 +1,208 @@
 # Pi ENERGY
 
-Raspberry Pi Pico 2 と Waveshare Pico-OLED-1.3 を用いて、
-**円周率（π）を計算し続ける行為そのものを可視化する**実験的プロジェクトです。
+**Pi ENERGY** is a small experimental project for **Raspberry Pi Pico 2** that visualizes  
+*the cost of computing each digit of π* rather than the value of π itself.
 
-本プロジェクトでは「πの数値」を主役にせず、
+This project intentionally consists of only **two files**:
 
-- 時間
-- 計算量
-- 確からしい桁数
-- 計算の勢い（エネルギー）
+- `main.py` — the complete executable (including display control)
+- `README.md` — this document
 
-を表示することで、
-
-> このくらいの時間と計算エネルギーで、この桁数に到達した
-
-という感覚を直感的に理解できることを目的としています。
+No external libraries or drivers are required.
 
 ---
 
-## 動作環境
+## Concept
+
+When π computation is discussed in the news, the focus is usually on:
+
+> “How many digits were computed?”
+
+However, what is rarely shown is:
+
+- how much **time**
+- how much **computation**
+- and how much **effort**
+
+is required to obtain *each additional digit*.
+
+**Pi ENERGY** is designed to make that invisible cost visible.
+
+The display does **not** show the digits of π.  
+Instead, it shows how difficult the *next digit* really is.
+
+---
+
+## Hardware & Software
 
 - Raspberry Pi Pico 2  
-- Waveshare Pico-OLED-1.3（128×64, SH1107, SPI）  
+- Waveshare Pico‑OLED‑1.3 (128×64, SH1107, SPI)  
 - MicroPython  
 
----
-
-## プロジェクトの考え方
-
-ニュースなどで語られる「円周率◯◯桁」という情報は、
-**最終結果（桁数）だけ**が強調されがちです。
-
-しかし実際には、
-
-- 桁が1つ増えるまでに必要な時間
-- その間に積み上げられる膨大な計算量
-- 初期は速く、後半ほど急激に苦しくなる進み方
-
-といった **過程そのもの** が重要です。
-
-Pi ENERGY は、その「過程」を表示するための装置です。
+All display control code for the SH1107 OLED is embedded directly in `main.py`.
+No external driver files are used.
 
 ---
 
-## Display 全体構成
+## Algorithm
 
-OLED は **横向き表示（128×64）** で、
-以下の **5行 + 下部エネルギーバー** で構成されています。
+The computation uses the **Nilakantha series**:
 
 ```
-[1] Pi ENERGY
-[2] d=06  t=00:49
-[3] dpm 0.0  nxt ---
-[4] ips14.6k N 728k
-[5] er -7  av14.8k
-[==== energy bar ====]
+π = 3 + 4/(2·3·4) − 4/(4·5·6) + 4/(6·7·8) − ...
 ```
 
-以下で、各行を順に説明します。
+This algorithm was chosen deliberately:
+
+- It is simple and easy to understand
+- It converges slowly
+- Each additional digit becomes significantly more expensive
+
+This makes it ideal for visualizing *computational effort* rather than performance.
+
+Floating‑point arithmetic (`float`) is used, so the project naturally reaches a
+practical limit at around **6–7 reliable decimal digits**.
+
+This limitation is not a flaw — it is part of the message.
 
 ---
 
-## 1行目：タイトル行
+## Display Layout
+
+The OLED is used in **landscape orientation (128×64)**.
 
 ```
 Pi ENERGY
+digits : 6
+time   : 06:12
+digits/min : 0.0
+energy
+[==========      ]
 ```
 
-- プロジェクト名です
-- 右端の小さな記号（スピナー）は、
-  プログラムが動き続けていることを示します
+Only four pieces of information are shown.
 
 ---
 
-## 2行目：桁数と経過時間（主役）
+## Display Explanation
+
+### digits
 
 ```
-d=06  t=00:49
+digits : 6
 ```
 
-### d（digits）
-- **小数点以下で「確からしい桁数」**
-- `d=06` は「小数点以下6桁程度までは信頼できる」という意味です
-- `err = |π_est - π|` から `-log10(err)` を使って概算しています
+The number of **reliable decimal digits** after the decimal point.
 
-### t（time）
-- プログラム起動からの **経過時間**
-- この例では「49秒」
+This is estimated from the current error:
 
-👉  
-**「Pico 2 で49秒回して、6桁まで到達した」**
-という事実を、この1行で表しています。
+```
+error ≈ |π_estimated − π|
+digits ≈ floor(−log10(error))
+```
+
+It answers the question:
+
+> “How many digits can we trust right now?”
 
 ---
 
-## 3行目：桁の増え方（ニュース的視点）
+### time
 
 ```
-dpm 0.0  nxt ---
+time : 06:12
 ```
 
-### dpm（digits per minute）
-- **1分あたり何桁増えているか**
-- 直近60秒間の平均から計算します
-- `0.0` は「直近1分で桁が増えていない」ことを意味します
+Elapsed time since the program started.
 
-### nxt（next digit）
-- **次の1桁に到達するまでの目安時間（秒）**
-- 予測できない場合は `---` と表示されます
+This provides the context:
 
-👉  
-桁が増えない時間が続くほど、
-「次の1桁がどれほど重いか」を実感できます。
+> “How long did it take to reach this number of digits?”
 
 ---
 
-## 4行目：計算量と瞬間速度
+### digits/min
 
 ```
-ips14.6k N 728k
+digits/min : 0.0
 ```
 
-### ips（iterations per second）
-- **瞬間的な計算速度**
-- `14.6k` は「毎秒 約14,600 ステップ」
+The average increase in reliable digits over the last 60 seconds.
 
-### N（total iterations）
-- 起動してから **合計で何ステップ計算したか**
-- `728k` は「約72万ステップ」
+- A value greater than 0 means digits are still increasing
+- `0.0` means no new digit has been achieved recently
 
-👉  
-桁が増えなくても、計算エネルギーは確実に積み上がっています。
+When this stays at `0.0`, the system is pushing hard but has not yet crossed the
+threshold for the next digit.
 
 ---
 
-## 5行目：誤差のオーダーと平均速度
+### energy bar
 
 ```
-er -7  av14.8k
+[==========      ]
 ```
 
-### er（error exponent）
-- 誤差の指数表示です
-- `-7` は「誤差がだいたい 10^-7 オーダー」
+A visual indicator of **computational energy**.
 
-### av（average ips）
-- 起動してからの **平均計算速度**
-- 瞬間値（ips）とは違い、安定した指標です
+- It represents the current computation speed relative to recent peak speed
+- It does **not** represent progress toward the next digit
+- It is intentionally abstract
+
+The bar exists to convey *effort*, not precision.
 
 ---
 
-## 下部：エネルギーバー
+## Why the Display Often “Does Not Change”
 
-```
-[==== energy bar ====]
-```
+It is completely normal for:
 
-- 最近の最大計算速度に対する **現在の勢い**
-- フルに近いほど「全力で回っている」状態
-- 数値ではなく **感覚を伝えるための表示**です
+- `digits` to stay constant for many minutes
+- `digits/min` to remain at `0.0`
+- the energy bar to stay active
 
----
+This indicates:
 
-## 表示が「止まって見える」とき
+> Massive computation is occurring,  
+> but the next digit is still out of reach.
 
-- d（桁数）が増えない
-- dpm が 0.0
-- nxt が --- のまま
-
-という状態は **異常ではありません**。
-
-それは、
-
-> 次の1桁を得るために、膨大な計算を積み続けている段階
-
-を正しく示しています。
+This behavior reflects the true nature of π computation:
+each additional digit costs dramatically more energy than the previous one.
 
 ---
 
-## まとめ
+## What This Project Is (and Is Not)
 
-Pi ENERGY は、
+**This project is:**
 
-- 円周率を「速く計算する」装置ではありません
-- 円周率計算に必要な **時間・労力・エネルギー** を
-  そのまま可視化する装置です
+- A visualization of computational cost
+- A physical demonstration of diminishing returns
+- A tool for intuition, not benchmarking
 
-桁が増えない時間こそが、この装置の一番の見どころです。
+**This project is not:**
+
+- A fast π calculator
+- A precision arithmetic library
+- A performance contest
+
+---
+
+## Files
+
+```
+/
+├── main.py
+└── README.md
+```
+
+That is the entire project.
+
+---
+
+## Closing Thought
+
+If a Raspberry Pi Pico 2 needs minutes to gain a single digit,
+then:
+
+> **Supercomputers computing trillions of digits of π are truly amazing.**
 
