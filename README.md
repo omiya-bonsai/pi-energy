@@ -1,5 +1,7 @@
 # Pi ENERGY
 
+[日本語版](README-ja.md)
+
 **Pi ENERGY** is a small experimental project for **Raspberry Pi Pico 2** that visualizes  
 *the cost of computing each digit of π* rather than the value of π itself.
 

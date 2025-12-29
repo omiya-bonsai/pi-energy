@@ -1,5 +1,7 @@
 # Pi ENERGY
 
+[English Version](README.md)
+
 **Pi ENERGY** は、Raspberry Pi Pico 2 を用いて、  
 **円周率（π）を計算するために必要な「時間」と「計算エネルギー」を可視化する**  
 実験的なプロジェクトです。
